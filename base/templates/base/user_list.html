@@ -1,0 +1,47 @@
+{% extends 'base/main.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>All Users</h2>
+    <div class="mb-3">
+        <a href="{% url 'medicines' %}" class="btn btn-secondary">Back to Home</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Username</th>
+                <!-- <th scope="col">Email</th> -->
+                <th scope="col" class="text-center">Medicines Count</th>
+                <!-- <th scope="col">Medicines</th> -->
+                <!-- Add more fields as needed -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td><a href="{% url 'user-medicines' user.id %}">{{ user.username }}</a></td>
+                <!-- <td>{{ user.email }}</td> -->
+                <td class="text-center">
+                    {{ user.medicine_set.count }}
+                </td>
+                <!-- <td>
+                    {% for medicine in user.medicine_set.all %}
+                        {{ medicine.medicine_name }} (Expiry Date: {{ medicine.expiry_date }})<br>
+                    {% empty %}
+                        No medicines
+                    {% endfor %}
+                </td> -->
+                
+                <!-- Add more columns for other user details or actions -->
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock content %}

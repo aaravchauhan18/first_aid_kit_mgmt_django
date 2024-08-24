@@ -1,0 +1,172 @@
+{% extends 'base/main.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            {% if request.user.is_staff %}
+                <h1>Hello <a href="/admin">{{ request.user|title }}</a></h1>
+            {% else %}
+                <h1>Hello {{ request.user|title }}</h1>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            {% if request.user.is_authenticated %}
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger">Logout</button>
+            </form>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-primary">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if expiring_medicines and not request.user.is_staff %}
+<div class="alert alert-warning mt-4">
+    <strong>Alert!</strong> The following medicines will expire within the next month:
+    <ul>
+        {% for medicine in expiring_medicines %}
+        <li>{{ medicine.medicine_name }} (Expiry Date: {{ medicine.expiry_date }})</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div id="search-add-wrapper" class="mt-4 col-12 col-lg-6 mx-auto">
+    <form method="GET" class="form-inline d-flex flex-nowrap">
+        <input type="text" name="search-area" class="form-control mr-2 flex-grow-1" placeholder="Search your medicine" value="{{ search_input }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+</div>
+
+<div class="container mt-4">
+    <h2 class="mb-3">Medicines List</h2>
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <a href="{% url 'medicine-create' %}" class="btn btn-success">Add Medicine</a>
+        {% if request.user.is_staff %}
+            <a href="{% url 'user-list' %}" class="btn btn-info">View All Users</a>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <form method="GET" class="form-inline d-flex flex-wrap align-items-center">
+            <div class="form-group mb-1 mb-sm-0 d-flex align-items-center">
+                <label for="per_page" class="sr-only">Show</label>
+                <span class="mr-2">Show</span>
+                <select id="per_page" name="per_page" class="form-control" onchange="this.form.submit()">
+                    <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                    <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                    <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                </select>
+            </div>
+            <div class="form-group mb-1 mb-sm-0 d-flex align-items-center">
+                <label for="entries" class="sr-only">entries</label>
+                <span class="ml-2">entries</span>
+            </div>
+            <input type="hidden" name="search-area" value="{{ search_input }}">
+            <!-- Keep the page number in the URL to maintain pagination state -->
+            <input type="hidden" name="page" value="{{ page_obj.number }}">
+        </form>
+    </div>
+    
+    
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Sr.No</th>
+                    <th scope="col">Medicine</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Expiry Date</th>
+                    {% if request.user.is_staff %}
+                    <th scope="col">User</th>
+                    {% endif %}
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medicine in page_obj %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ medicine.medicine_name }}</td>
+                    <td><a href="{% url 'medicine' medicine.id %}">{{ medicine.description }}</a></td>
+                    <td>{{ medicine.quantity }}</td>
+                    <td class="{% if medicine in expiring_medicines %}text-danger{% endif %}">{{ medicine.expiry_date }}</td>
+                    {% if request.user.is_staff %}
+                    <td>
+                        <a href="{% url 'user-medicines' medicine.user.id %}">{{ medicine.user.username }}</a>
+                    </td>  
+                    {% endif %}
+                    <td class="d-flex">
+                        <a href="{% url 'medicine-update' medicine.id %}" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="{% url 'medicine-delete' medicine.id %}" class="btn btn-sm btn-danger ml-1">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                {% if request.user.is_staff %}
+                    <tr>
+                        <td colspan="7" class="text-center">No medicines in List</td>
+                    </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">No medicines in List</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <br>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1&per_page={{ per_page }}&search-area={{ search_input }}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&search-area={{ search_input }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}<span class="sr-only">(current)</span></span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&per_page={{ per_page }}&search-area={{ search_input }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&search-area={{ search_input }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&per_page={{ per_page }}&search-area={{ search_input }}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+{% endblock content %}
