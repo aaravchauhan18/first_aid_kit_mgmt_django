@@ -16,3 +16,5 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'first_aid_kit_mgmt.settings')
 application = get_wsgi_application()
 
 app = application
+
+
