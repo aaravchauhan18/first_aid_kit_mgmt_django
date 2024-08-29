@@ -9,17 +9,13 @@
 # python 3.12 manage.py collectstatic --noinput --clear
 
 
-#!/bin/bash
-
-echo "Installing Python..."
-apt-get update
-apt-get install -y python3 python3-pip
+echo "Building the project..."
+python 3.12.5 -m pip install -r requirements.txt
 
 echo "Make Migration..."
-python3 manage.py makemigrations
-
-echo "Apply Migrations..."
-python3 manage.py migrate
+python 3.12.5 manage.py makemigrations --noinput
+python 3.12.5 manage.py migrate --noinput
 
 echo "Collect Static..."
-python3 manage.py collectstatic --noinput
+python 3.12.5 manage.py collectstatic --noinput --clear
+
